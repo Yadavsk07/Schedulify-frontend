@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://schedulify-backend-new.onrender.com/api",
+  baseURL: "https://schedulify-backend-new-1.onrender.com/api",
   //baseURL: "http://localhost:8080/api",
   timeout: 120000
   // withCredentials: true, // ✅ important for CORS + cookies if ever used
