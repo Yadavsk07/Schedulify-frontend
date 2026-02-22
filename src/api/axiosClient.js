@@ -1,13 +1,14 @@
 import axios from "axios";
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
 const api = axios.create({
-  baseURL: "https://schedulify-backend-new-1.onrender.com/api",
-  //baseURL: "http://localhost:8080/api",
+  baseURL: apiBaseUrl,
   timeout: 120000
-  // withCredentials: true, // ✅ important for CORS + cookies if ever used
+  // withCredentials: true, // important for CORS + cookies if ever used
 });
 
-// ✅ Attach JWT token automatically
+// Attach JWT token automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("jwt");
@@ -19,13 +20,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Centralized error handling
+// Centralized error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
 
-    // 🔐 Unauthorized → redirect to login
+    // Unauthorized -> redirect to login
     if (status === 401) {
       localStorage.removeItem("jwt");
       localStorage.removeItem("schoolId");
@@ -40,16 +41,16 @@ api.interceptors.response.use(
       }
     }
 
-    // 🚫 Forbidden (token exists but no access)
+    // Forbidden (token exists but no access)
     if (status === 403) {
       let errorMessage = "Access denied. You don't have permission to perform this action.";
-      
+
       // Try to extract a meaningful error message
       if (error?.response?.data) {
-        if (typeof error.response.data === 'string') {
+        if (typeof error.response.data === "string") {
           // If data is just "Forbidden" or similar, use a more helpful message
           const dataStr = error.response.data.trim();
-          if (dataStr.toLowerCase() === 'forbidden' || dataStr === '') {
+          if (dataStr.toLowerCase() === "forbidden" || dataStr === "") {
             errorMessage = "Access denied. Please ensure you are logged in as a school administrator and have the necessary permissions.";
           } else {
             errorMessage = error.response.data;
@@ -60,7 +61,7 @@ api.interceptors.response.use(
           errorMessage = error.response.data.message;
         }
       }
-      
+
       // Log additional debug info for 403 errors
       const token = localStorage.getItem("jwt");
       const schoolId = localStorage.getItem("schoolId");
@@ -74,12 +75,12 @@ api.interceptors.response.use(
         hasTeacherId: !!teacherId,
         note: "If you logged in as admin but still get 403, the JWT token may not have admin role claims. Try logging out and logging back in."
       });
-      
+
       // Ensure error.response.data is an object with the error message
       if (!error.response) {
         error.response = {};
       }
-      if (!error.response.data || typeof error.response.data === 'string') {
+      if (!error.response.data || typeof error.response.data === "string") {
         error.response.data = {};
       }
       error.response.data.error = errorMessage;
