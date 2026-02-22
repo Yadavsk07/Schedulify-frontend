@@ -5,6 +5,10 @@ import PageHeader from "../components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { isAdmin } from "../utils/auth";
 
+const getTeacherIdSortValue = (id) => {
+  const m = String(id || "").match(/(\d{1,6})/);
+  return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
+};
 
 export default function Teachers() {
 
@@ -12,7 +16,7 @@ export default function Teachers() {
 
 useEffect(() => {
   if (!isAdmin()) {
-    navigate("/login"); // or /unauthorized
+    navigate("/school/login");
   }
 }, [navigate]);
 
@@ -43,7 +47,14 @@ useEffect(() => {
     try {
       setLoading(true);
       const res = await api.get(`/teachers/${schoolId}`);
-      setTeachers(res.data || []);
+      const rows = Array.isArray(res.data) ? [...res.data] : [];
+      rows.sort((a, b) => {
+        const aNum = getTeacherIdSortValue(a.id);
+        const bNum = getTeacherIdSortValue(b.id);
+        if (aNum !== bNum) return aNum - bNum;
+        return String(a.id || "").localeCompare(String(b.id || ""));
+      });
+      setTeachers(rows);
     } catch {
       setError("Failed to load teachers");
     } finally {

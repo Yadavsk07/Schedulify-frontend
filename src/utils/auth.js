@@ -1,15 +1,15 @@
 // Authentication utility functions
 
 export const getToken = () => {
-  return localStorage.getItem("token");
+  return localStorage.getItem("jwt");
 };
 
 export const setToken = (token) => {
-  localStorage.setItem("token", token);
+  localStorage.setItem("jwt", token);
 };
 
 export const removeToken = () => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("jwt");
 };
 
 export const isAuthenticated = () => {

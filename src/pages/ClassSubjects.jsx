@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import PageHeader from "../components/PageHeader";
 import api from "../api/axiosClient";
@@ -106,6 +106,45 @@ export default function ClassSubjects() {
     setError("");
   };
 
+  const classNameById = new Map(classes.map((c) => [c.id, c.name]));
+  const subjectNameById = new Map(subjects.map((s) => [s.id, s.name]));
+  const teacherNameById = new Map(teachers.map((t) => [t.id, t.name]));
+  const classById = new Map(classes.map((c) => [c.id, c]));
+
+  const getClassSortValue = (classItem) => {
+    const raw = `${classItem?.name || ""} ${classItem?.id || ""}`;
+    const m = raw.match(/(\d{1,3})/);
+    return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
+  };
+
+  const getSubjectSortValue = (subjectId) => {
+    const m = String(subjectId || "").match(/(\d{1,3})/);
+    return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
+  };
+
+  const sortedData = useMemo(() => {
+    const arr = [...data];
+    arr.sort((a, b) => {
+      const aClass = classById.get(a.classGroupId);
+      const bClass = classById.get(b.classGroupId);
+      const aClassNum = getClassSortValue(aClass || { id: a.classGroupId });
+      const bClassNum = getClassSortValue(bClass || { id: b.classGroupId });
+      if (aClassNum !== bClassNum) return aClassNum - bClassNum;
+
+      const aClassName = classNameById.get(a.classGroupId) || a.classGroupId || "";
+      const bClassName = classNameById.get(b.classGroupId) || b.classGroupId || "";
+      const classCmp = String(aClassName).localeCompare(String(bClassName));
+      if (classCmp !== 0) return classCmp;
+
+      const aSubNum = getSubjectSortValue(a.subjectId);
+      const bSubNum = getSubjectSortValue(b.subjectId);
+      if (aSubNum !== bSubNum) return aSubNum - bSubNum;
+
+      return String(a.subjectId || "").localeCompare(String(b.subjectId || ""));
+    });
+    return arr;
+  }, [data, classById, classNameById]);
+
   // ================= UI =================
   return (
     <div className="flex">
@@ -167,18 +206,28 @@ export default function ClassSubjects() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {data.length === 0 ? (
+                {sortedData.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="text-center py-6 text-gray-500">
                       No class-subject mappings found
                     </td>
                   </tr>
                 ) : (
-                  data.map((row) => (
-                    <tr key={row.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">{row.classGroupId}</td>
-                      <td className="px-6 py-4">{row.subjectId}</td>
-                      <td className="px-6 py-4">{row.teacherId || "—"}</td>
+                  sortedData.map((row) => (
+                    <tr key={row.id || row._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        {classNameById.get(row.classGroupId) || row.classGroupId}
+                        <span className="text-xs text-gray-500 ml-1">({row.classGroupId})</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {subjectNameById.get(row.subjectId) || row.subjectId}
+                        <span className="text-xs text-gray-500 ml-1">({row.subjectId})</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {row.teacherId
+                          ? `${teacherNameById.get(row.teacherId) || row.teacherId} (${row.teacherId})`
+                          : "—"}
+                      </td>
                       <td className="px-6 py-4">{row.periodsPerWeek}</td>
                       <td className="px-6 py-4">{row.roomType}</td>
                       <td className="px-6 py-4">
@@ -188,7 +237,7 @@ export default function ClassSubjects() {
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => handleDelete(row.id)}
+                          onClick={() => handleDelete(row.id || row._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           Delete
@@ -220,7 +269,7 @@ export default function ClassSubjects() {
                     <option value="">Select Class</option>
                     {classes.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {c.name} ({c.id})
                       </option>
                     ))}
                   </select>
@@ -235,7 +284,7 @@ export default function ClassSubjects() {
                     <option value="">Select Subject</option>
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.name}
+                        {s.name} ({s.id})
                       </option>
                     ))}
                   </select>
@@ -252,7 +301,7 @@ export default function ClassSubjects() {
                     <option value="">Select Teacher</option>
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name}
+                        {t.name} ({t.id})
                       </option>
                     ))}
                   </select>

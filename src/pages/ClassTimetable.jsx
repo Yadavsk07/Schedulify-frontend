@@ -16,7 +16,7 @@ export default function ClassTimetable() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const days = ["MON", "TUE", "WED", "THU", "FRI"];
   const maxPeriods = 8;
 
   useEffect(() => {
@@ -30,7 +30,12 @@ export default function ClassTimetable() {
     try {
       setLoading(true);
       const res = await api.get(`/classes/${schoolId}/${classId}`);
-      const secs = res.data?.sections || [];
+      const secsRaw = res.data?.sections || [];
+      const secs = Array.isArray(secsRaw)
+        ? secsRaw
+            .map((s) => (typeof s === "string" ? s : s?.sectionId || ""))
+            .filter(Boolean)
+        : [];
       setSections(secs);
 
       const timetableData = {};

@@ -71,7 +71,7 @@ export default function TeacherTimetable() {
     }
   };
 
-  const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const days = ["MON", "TUE", "WED", "THU", "FRI"];
   const maxPeriods = 8;
 
   const getSlotForPeriod = (day, period) => {
